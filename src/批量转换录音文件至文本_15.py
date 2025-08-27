@@ -2,6 +2,7 @@
 import os
 import torch
 import librosa
+from tqdm import tqdm
 from transformers import WhisperProcessor, WhisperForConditionalGeneration
 from typing import List, Dict
 
@@ -25,11 +26,11 @@ def transcribe_audio_with_timestamps(model, processor, audio_path, output_path, 
     speech_array, sr = librosa.load(audio_path, sr=16000, mono=True)
     audio_chunks = split_audio(speech_array, sr, chunk_length)
 
-    forced_decoder_ids = processor.get_decoder_prompt_ids(language="en", task="transcribe")
+    forced_decoder_ids = processor.get_decoder_prompt_ids(language="zh", task="transcribe")
     current_time = 0.0
     results = []
 
-    for chunk in audio_chunks:
+    for chunk in tqdm(audio_chunks, desc="Processing chunks", unit="chunk"):
         inputs = processor(chunk, sampling_rate=sr, return_tensors="pt").to(device)
         generated_ids = model.generate(**inputs, forced_decoder_ids=forced_decoder_ids)
         transcription = processor.batch_decode(generated_ids, skip_special_tokens=True)[0]
